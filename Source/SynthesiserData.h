@@ -7,6 +7,10 @@
  */
 class SynthesiserData {
 public:
+    static const Identifier TAIL_ON;
+    static const Identifier TAIL_OFF;
+
+    SynthesiserData();
     /**
      * This method constructs a new synthesiser data by a identifier
      * @param id Identifier to add to the empty value tree
