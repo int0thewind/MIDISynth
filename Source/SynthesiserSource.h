@@ -132,7 +132,7 @@ public:
     void releaseResources() override;
 
     /**
-     * Called when the next sound is rendered.
+     * Render the next audio buffer.
      * This function accepts a reference to the buffer we need to fill.
      * @param bufferToFill the buffer to fill in with expected audio data
      */
