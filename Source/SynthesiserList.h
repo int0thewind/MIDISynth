@@ -12,11 +12,11 @@
 
 #include "JuceHeader.h"
 
-class SynthesiserList : public ListBox, public ListBoxModel, public AsyncUpdater {
+class SynthesiserList : public ListBox, public ListBoxModel {
 public:
     SynthesiserList();
 
-    void handleAsyncUpdate() override;
+    ~SynthesiserList() override = default;
 
     int getNumRows() override;
 
