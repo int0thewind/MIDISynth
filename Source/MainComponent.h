@@ -9,6 +9,9 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "SynthesiserList.h"
+#include "SynthesiserSource.h"
+#include "SynthesiserData.h"
 
 //==============================================================================
 /*
@@ -18,7 +21,8 @@
 class MainComponent :
         public AudioAppComponent,
         public Button::Listener,
-        public Slider::Listener
+        public Slider::Listener,
+        public juce::ValueTree::Listener
 {
 public:
     //==============================================================================
@@ -34,6 +38,22 @@ public:
     void paint (Graphics& g) override;
     void resized() override;
 
+    //==============================================================================
+    void buttonClicked(Button *button) override;
+    void sliderValueChanged(Slider *slider) override;
+
 private:
+
+    TextButton openAudioSettings {"openAudioSettings"};
+    MidiKeyboardComponent midiKeyboardComponent;
+    MidiKeyboardState midiKeyboardState;
+    SynthesiserList synthesiserList;
+    Slider tailOnSlider;
+    Slider tailOffSlider;
+
+    SynthesiserAudioSource audioSource;
+
+    SynthesiserData synthesiserData;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

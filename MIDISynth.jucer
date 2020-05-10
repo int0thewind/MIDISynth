@@ -3,8 +3,18 @@
 <JUCERPROJECT id="kLcnQL" name="MIDISynth" projectType="guiapp" jucerVersion="5.4.7">
   <MAINGROUP id="FxdQte" name="MIDISynth">
     <GROUP id="{2F771D53-39EF-3E3A-77D9-166024994C92}" name="Source">
-      <FILE id="X8dOvv" name="ValueTreeWrapper.h" compile="0" resource="0"
-            file="Source/ValueTreeWrapper.h"/>
+      <FILE id="CMcDzg" name="SynthesiserData.cpp" compile="1" resource="0"
+            file="Source/SynthesiserData.cpp"/>
+      <FILE id="hfmlMU" name="SynthesiserSource.cpp" compile="1" resource="0"
+            file="Source/SynthesiserSource.cpp"/>
+      <FILE id="YMk1SQ" name="SynthesiserSource.h" compile="0" resource="0"
+            file="Source/SynthesiserSource.h"/>
+      <FILE id="ZvYWlq" name="SynthesiserList.cpp" compile="1" resource="0"
+            file="Source/SynthesiserList.cpp"/>
+      <FILE id="rQIeBa" name="SynthesiserList.h" compile="0" resource="0"
+            file="Source/SynthesiserList.h"/>
+      <FILE id="X8dOvv" name="SynthesiserData.h" compile="1" resource="0"
+            file="Source/SynthesiserData.h"/>
       <FILE id="HhCeLR" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
       <FILE id="QHkwzm" name="MainComponent.cpp" compile="1" resource="0"
             file="Source/MainComponent.cpp"/>
