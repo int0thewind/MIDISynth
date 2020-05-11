@@ -9,9 +9,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "SynthesiserList.h"
 #include "SynthesiserSource.h"
-#include "SynthesiserData.h"
 
 /**
  * This component lives inside our window, and this is where we put all our controls and content.
@@ -25,10 +23,9 @@
 class MainComponent :
         public AudioAppComponent,
         public Button::Listener,
-        public Slider::Listener,
         public ComboBox::Listener,
-        public juce::ValueTree::Listener,
-        public juce::Timer
+        public juce::Timer,
+        public ListBoxModel
 {
 public:
 //// ==============================================================================
@@ -64,7 +61,7 @@ public:
     /**
      * Called when the audio source is changing from prepared state to unprepared state.
      * This function is essentially NOP, though we still have to call the synthesiser's releaseResource() formally.
-     * @see SynthesiserAudioSource::releaseResource()
+     * @see ElementaryVoiceSynthesiser::releaseResource()
      */
     void releaseResources() override;
 
@@ -95,27 +92,10 @@ public:
     void buttonClicked(Button *button) override;
 
     /**
-     * Called when a slider has been modified
-     * @param slider the slider which has been modified
-     */
-    void sliderValueChanged(Slider *slider) override;
-
-    /**
      * Called when a combo box has its menu changed
      * @param comboBoxThatHasChanged the combo box which is clicked
      */
-    void comboBoxChanged(ComboBox *comboBoxThatHasChanged) override;
-
-//// ==============================================================================
-//// Value tree listener
-//// ==============================================================================
-
-    /**
-     * Called when the value tree we listen to has a property change
-     * @param treeWhosePropertyHasChanged the value tree that has the property changed
-     * @param property the property which is changed
-     */
-    void valueTreePropertyChanged (ValueTree &treeWhosePropertyHasChanged, const Identifier &property) override;
+    void comboBoxChanged(ComboBox *comboBox) override;
 
 //// ==============================================================================
 //// Timer callback
@@ -123,8 +103,28 @@ public:
 
     /**
      * Called periodically to carry out certain task
+     * This function periodically updates the CPU usage.
      */
     void timerCallback() override;
+
+//// ==============================================================================
+//// List box module
+//// ==============================================================================
+    /**
+     * Return the number of rows that our synthesiser list should have.
+     * @return the number of rows that our synthesiser list should have
+     */
+    int getNumRows() override;
+
+    /**
+     * Paint the voice to our list
+     * @param rowNumber the index of the voice number to paint on
+     * @param g graphics object that is related to the row
+     * @param width the width of the line
+     * @param height the height of the line
+     * @param rowIsSelected whether the row is selected or not
+     */
+    void paintListBoxItem(int rowNumber, Graphics &g, int width, int height, bool rowIsSelected) override;
 
 private:
     TextButton audioSettings {"Audio Settings"};
@@ -133,15 +133,15 @@ private:
     MidiKeyboardComponent midiKeyboardComponent;
     MidiKeyboardState midiKeyboardState;
 
-    SynthesiserList synthesiserList;
+    ListBox synthesiserList;
     ComboBox synthesiserVoiceAdder;
+    TextButton addVoiceButton {"Add Voice"};
 
     AudioVisualiserComponent audioVisualiserComponent;
     Label cpuUsageLabel {"cpuUsageLabel", "CPU usage:"};
     Label cpuUsage {"cpuUsage", "0.00 %"};
 
-    SynthesiserAudioSource audioSource;
-    SynthesiserData synthesiserData;
+    ElementaryVoiceSynthesiser audioSource;
 
     inline void openAudioSettings();
 

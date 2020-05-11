@@ -116,7 +116,7 @@ public:
 //// Other helper functions
 //// ==============================================================================
 
-    String getStringRepresentation();
+    String toString();
 
 private:
     const StringArray voiceTypes {"Sine", "Square", "Triangle", "Sawtooth"};
@@ -152,14 +152,14 @@ private:
     inline float getCurrentSample(float amplitude);
 };
 
-class SynthesiserAudioSource : public AudioSource {
+class ElementaryVoiceSynthesiser : public AudioSource {
 public:
     /**
      * This constructor receives the alias of a midi keyboard state from the main component
      * Also, it sets the synthesiser's voice to our synthesiserAudioSound, which accepts all channels and notes
      * @param state the alias of the midiKeyboardState from the main component.
      */
-    explicit SynthesiserAudioSource(MidiKeyboardState& state);
+    explicit ElementaryVoiceSynthesiser(MidiKeyboardState& state);
 
     /**
      * Called when the audio source is changing from unprepared state to prepared state
@@ -186,10 +186,11 @@ public:
      * Add voice to the internal synthesiser
      * @param voice
      */
-    void addVoice(SynthesiserVoice* voice);
+    void addVoice(ElementaryVoice* voice);
 
     /**
-     * Remove voice by its index
+     * Remove voice by its index.
+     * The index is the array index. It starts from 0
      * @todo would the rest of the index automatically update?
      * @param index
      */
@@ -201,10 +202,24 @@ public:
     void removeAllVoices();
 
     /**
+     * Get the voice by the index.
+     * The index is the array index. It starts from 0
+     * @param index the index of the voice.
+     * @return a pointer holding the voice
+     */
+    ElementaryVoice* getVoice(int index);
+
+    /**
      * Get all the voices in the synthesiser
      * @return an array of voices
      */
-    Array<SynthesiserVoice*> getAllVoices();
+    Array<ElementaryVoice*> getAllVoices();
+
+    /**
+     * Get the total number of voices our synthesiser have
+     * @return the total number of voices
+     */
+    int getTotalNumVoices();
 
 private:
     const int MAX_VOICES = 8;

@@ -23,23 +23,23 @@ bool SynthesiserAudioSound::appliesToChannel(int midiChannel) {
 }
 
 //// ==============================================================================
-//// SynthesiserAudioSource Class
+//// ElementaryVoiceSynthesiser Class
 //// ==============================================================================
 
-SynthesiserAudioSource::SynthesiserAudioSource(MidiKeyboardState &state)
+ElementaryVoiceSynthesiser::ElementaryVoiceSynthesiser(MidiKeyboardState &state)
     : midiKeyboardState(state) {
     this->synthesiser.addSound(new SynthesiserAudioSound());
 }
 
-void SynthesiserAudioSource::prepareToPlay(int samplesPerBlockExpected, double sampleRate) {
+void ElementaryVoiceSynthesiser::prepareToPlay(int samplesPerBlockExpected, double sampleRate) {
     this->synthesiser.setCurrentPlaybackSampleRate(sampleRate);
 }
 
-void SynthesiserAudioSource::releaseResources() {
+void ElementaryVoiceSynthesiser::releaseResources() {
     // Do nothing!
 }
 
-void SynthesiserAudioSource::getNextAudioBlock(const AudioSourceChannelInfo &bufferToFill) {
+void ElementaryVoiceSynthesiser::getNextAudioBlock(const AudioSourceChannelInfo &bufferToFill) {
     bufferToFill.clearActiveBufferRegion();
     MidiBuffer incomingMidi;
     this->midiKeyboardState.processNextMidiBuffer (incomingMidi, bufferToFill.startSample,
@@ -48,25 +48,33 @@ void SynthesiserAudioSource::getNextAudioBlock(const AudioSourceChannelInfo &buf
                                  bufferToFill.startSample, bufferToFill.numSamples);
 }
 
-void SynthesiserAudioSource::removeVoice(int index) {
+void ElementaryVoiceSynthesiser::removeVoice(int index) {
     this->synthesiser.removeVoice(index);
 }
 
-void SynthesiserAudioSource::addVoice(SynthesiserVoice *voice) {
+void ElementaryVoiceSynthesiser::addVoice(ElementaryVoice *voice) {
     if (this->synthesiser.getNumVoices() >= MAX_VOICES) { return; }
     this->synthesiser.addVoice(voice);
 }
 
-void SynthesiserAudioSource::removeAllVoices() {
+void ElementaryVoiceSynthesiser::removeAllVoices() {
     this->synthesiser.clearVoices();
 }
 
-Array<SynthesiserVoice*> SynthesiserAudioSource::getAllVoices() {
-    Array<SynthesiserVoice*> allVoices;
+ElementaryVoice* ElementaryVoiceSynthesiser::getVoice(int index) {
+    return dynamic_cast<ElementaryVoice*>(synthesiser.getVoice(index));
+}
+
+Array<ElementaryVoice*> ElementaryVoiceSynthesiser::getAllVoices() {
+    Array<ElementaryVoice*> allVoices;
     for (int i = 0; i < synthesiser.getNumVoices(); i++) {
-        allVoices.add(synthesiser.getVoice(i));
+        allVoices.add(dynamic_cast<ElementaryVoice*>(synthesiser.getVoice(i)));
     }
     return allVoices;
+}
+
+int ElementaryVoiceSynthesiser::getTotalNumVoices() {
+    return synthesiser.getNumVoices();
 }
 
 //// ==============================================================================
@@ -232,6 +240,6 @@ float ElementaryVoice::getCurrentSample(float amplitude) {
     return (float) std::sin((float) this->angle) * amplitude;
 }
 
-String ElementaryVoice::getStringRepresentation() {
-    return "Wave type: " + voiceType;
+String ElementaryVoice::toString() {
+    return voiceType + " wave";
 }
