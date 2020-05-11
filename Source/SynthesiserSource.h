@@ -11,6 +11,53 @@
 #pragma once
 
 #include "JuceHeader.h"
+
+class Angle {
+public:
+    explicit Angle(float angleDelta = 0.0f) : currentAngle(0.0f) ,  angleDelta(angleDelta) {};
+
+    float getAngleDelta() const {
+        return angleDelta;
+    }
+
+    float getCurrentAngle() const {
+        return currentAngle;
+    }
+
+    void setCurrentAngle(float newCurrentAngle) {
+        currentAngle = newCurrentAngle;
+    }
+
+    void setAngleDelta(float newAngleDelta) {
+        angleDelta = newAngleDelta;
+    }
+
+    explicit operator float() const {
+        return currentAngle;
+    }
+
+    Angle& operator++() {
+        this->currentAngle += angleDelta;
+        if (angleDelta >= MathConstants<float>::twoPi) {
+            angleDelta -= MathConstants<float>::twoPi;
+        }
+        return *this;
+    }
+
+    Angle operator++(int) {
+        Angle toReturn = *this;
+        this->currentAngle += angleDelta;
+        if (angleDelta >= MathConstants<float>::twoPi) {
+            angleDelta -= MathConstants<float>::twoPi;
+        }
+        return toReturn;
+    }
+
+private:
+    float currentAngle = 0.0f;
+    float angleDelta = 0.0f;
+};
+
 /**
  * A data class that determines whether a sound or a channel can be played by the synthesiser
  */
@@ -66,37 +113,43 @@ public:
     void resized() override;
 
 //// ==============================================================================
-//// Constructors and destructors
+//// Other helper functions
 //// ==============================================================================
 
-    void showWindowAsync();
+    String getStringRepresentation();
 
 private:
-    StringArray voiceTypes {"Sine", "Square", "Triangle", "Sawtooth"};
-    String voiceType {""};
+    const StringArray voiceTypes {"Sine", "Square", "Triangle", "Sawtooth"};
+    String voiceType {"Sine"};
 
-    double currentAngle = 0.0;
-    double angleDelta = 0.0;
+    const float NYQUIST_FREQUENCY = 44100.0f;
 
-    double amplitudeFactor = 1.0;
+    mutable Angle angle;
+    float dynamics = 0.0f;
+    float tailOn = 0.0f;
+    float tailOff = 0.0f;
+
+    float amplitudeFactor = 1.0f;
     Slider amplitudeFactorSlider
         {Slider::SliderStyle::LinearHorizontal, Slider::TextEntryBoxPosition::TextBoxLeft};
     Label amplitudeFactorLabel {"amplitudeFactorLabel", "Amplitude factor:"};
 
-    double frequencyFactor = 1.0;
+    float frequencyFactor = 1.0f;
     Slider frequencyFactorSlider
         {Slider::SliderStyle::LinearHorizontal, Slider::TextEntryBoxPosition::TextBoxLeft};;
     Label frequencyFactorLabel {"frequencyFactorLabel", "Frequency factor:"};
 
-    double tailOn = 1.0;
+    float tailOnFactor = 1.0f;
     Slider tailOnSlider
         {Slider::SliderStyle::LinearHorizontal, Slider::TextEntryBoxPosition::TextBoxLeft};;
     Label tailOnLabel {"tailOnLabel", "Tail on value:"};
 
-    double tailOff = 1.0;
+    float tailOffFactor = 0.0f;
     Slider tailOffSlider
         {Slider::SliderStyle::LinearHorizontal, Slider::TextEntryBoxPosition::TextBoxLeft};;
     Label tailOffLabel {"tailOffLabel", "Tail off value:"};
+
+    inline float getCurrentSample(float amplitude);
 };
 
 class SynthesiserAudioSource : public AudioSource {
@@ -146,6 +199,12 @@ public:
      * Remove all the voices in the internal synthesiser.
      */
     void removeAllVoices();
+
+    /**
+     * Get all the voices in the synthesiser
+     * @return an array of voices
+     */
+    Array<SynthesiserVoice*> getAllVoices();
 
 private:
     const int MAX_VOICES = 8;
