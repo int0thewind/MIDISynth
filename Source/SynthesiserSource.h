@@ -191,8 +191,7 @@ public:
     /**
      * Remove voice by its index.
      * The index is the array index. It starts from 0
-     * @todo would the rest of the index automatically update?
-     * @param index
+     * @param index the index of the voice to remove
      */
     void removeVoice(int index);
 

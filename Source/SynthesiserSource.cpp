@@ -190,7 +190,15 @@ void ElementaryVoice::renderNextBlock(AudioBuffer<float> &outputBuffer, int star
 }
 
 void ElementaryVoice::sliderValueChanged(Slider *slider) {
-
+    if (slider == &amplitudeFactorSlider) {
+        amplitudeFactor = (float) slider->getValue();
+    } else if (slider == &frequencyFactorSlider) {
+        frequencyFactor = (float) slider->getValue();
+    } else if (slider == &tailOnSlider) {
+        tailOnFactor = (float) slider->getValue();
+    } else if (slider == &tailOffSlider) {
+        tailOffFactor = (float) slider->getValue();
+    }
 }
 
 void ElementaryVoice::paint(Graphics &g) {

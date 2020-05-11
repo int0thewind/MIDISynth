@@ -23,7 +23,6 @@
 class MainComponent :
         public AudioAppComponent,
         public Button::Listener,
-//        public ComboBox::Listener,
         public juce::Timer,
         public ListBoxModel
 {
@@ -91,12 +90,6 @@ public:
      */
     void buttonClicked(Button *button) override;
 
-//    /**
-//     * Called when a combo box has its menu changed
-//     * @param comboBoxThatHasChanged the combo box which is clicked
-//     */
-//    void comboBoxChanged(ComboBox *comboBox) override;
-
 //// ==============================================================================
 //// Timer callback
 //// ==============================================================================
@@ -126,8 +119,16 @@ public:
      */
     void paintListBoxItem(int rowNumber, Graphics &g, int width, int height, bool rowIsSelected) override;
 
+    /**
+     * When the user double clicked the item, the settings pops up.
+     * @param row the index to show.
+     */
     void listBoxItemDoubleClicked (int row, const MouseEvent &) override;
 
+    /**
+     * When the delete key is pressed, we delete the voice we selected.
+     * @param lastRowSelected the row (index) to be deleted
+     */
     void deleteKeyPressed (int lastRowSelected) override;
 
 private:

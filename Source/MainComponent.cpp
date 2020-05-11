@@ -136,12 +136,6 @@ void MainComponent::buttonClicked(Button *button) {
     }
 }
 
-//void MainComponent::comboBoxChanged(ComboBox *comboBox) {
-//    if (comboBox == &this->synthesiserVoiceAdder) {
-//        // NOP
-//    }
-//}
-
 //// ==============================================================================
 //// Timer callback
 //// ==============================================================================
@@ -172,7 +166,16 @@ void MainComponent::paintListBoxItem(int rowNumber, Graphics &g, int width, int 
 }
 
 void MainComponent::listBoxItemDoubleClicked(int row, const MouseEvent &) {
-    // TODO display new window
+    ElementaryVoice* voice = audioSource.getVoice(row);
+    juce::DialogWindow::LaunchOptions dialogWindow;
+    dialogWindow.useNativeTitleBar = true;
+    dialogWindow.resizable = false;
+    dialogWindow.dialogTitle = "Voice Configuration";
+    dialogWindow.dialogBackgroundColour = this->getLookAndFeel().findColour(ResizableWindow::backgroundColourId);
+    dialogWindow.content.setNonOwned(voice);
+    dialogWindow.launchAsync();
+
+    updateSynthesiserList();
 }
 
 void MainComponent::deleteKeyPressed(int lastRowSelected) {
