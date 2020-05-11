@@ -23,7 +23,7 @@
 class MainComponent :
         public AudioAppComponent,
         public Button::Listener,
-        public ComboBox::Listener,
+//        public ComboBox::Listener,
         public juce::Timer,
         public ListBoxModel
 {
@@ -91,11 +91,11 @@ public:
      */
     void buttonClicked(Button *button) override;
 
-    /**
-     * Called when a combo box has its menu changed
-     * @param comboBoxThatHasChanged the combo box which is clicked
-     */
-    void comboBoxChanged(ComboBox *comboBox) override;
+//    /**
+//     * Called when a combo box has its menu changed
+//     * @param comboBoxThatHasChanged the combo box which is clicked
+//     */
+//    void comboBoxChanged(ComboBox *comboBox) override;
 
 //// ==============================================================================
 //// Timer callback
@@ -126,8 +126,13 @@ public:
      */
     void paintListBoxItem(int rowNumber, Graphics &g, int width, int height, bool rowIsSelected) override;
 
+    void listBoxItemDoubleClicked (int row, const MouseEvent &) override;
+
+    void deleteKeyPressed (int lastRowSelected) override;
+
 private:
-    TextButton audioSettings {"Audio Settings"};
+    TextButton audioSettings {"Audio settings"};
+    TextButton clearAllVoice {"Clear all voice"};
     // TODO should have an selector to choose input devices?
 
     MidiKeyboardComponent midiKeyboardComponent;
@@ -135,7 +140,7 @@ private:
 
     ListBox synthesiserList;
     ComboBox synthesiserVoiceAdder;
-    TextButton addVoiceButton {"Add Voice"};
+    TextButton addVoiceButton {"Add voice"};
 
     AudioVisualiserComponent audioVisualiserComponent;
     Label cpuUsageLabel {"cpuUsageLabel", "CPU usage:"};
@@ -144,6 +149,8 @@ private:
     ElementaryVoiceSynthesiser audioSource;
 
     inline void openAudioSettings();
+
+    inline void updateSynthesiserList();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

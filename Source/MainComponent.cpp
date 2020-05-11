@@ -13,13 +13,16 @@ MainComponent::MainComponent() :
     // Initialise audioSettings button
     audioSettings.addListener(this);
     addAndMakeVisible(audioSettings);
+    // Initialise clearAllVoice button
+    clearAllVoice.addListener(this);
+    addAndMakeVisible(clearAllVoice);
     // Initialise midiKeyboardComponent
     midiKeyboardComponent.setOctaveForMiddleC(4);
     addAndMakeVisible(midiKeyboardComponent);
     // Initialise synthesiserList
     addAndMakeVisible(synthesiserList);
     // Initialise synthesiserVoiceAdder
-    synthesiserVoiceAdder.addListener(this);
+//    synthesiserVoiceAdder.addListener(this);
     synthesiserVoiceAdder.addItemList(
             {"Sine", "Square", "Triangle", "Sawtooth"}, 1);
     synthesiserVoiceAdder.setSelectedId(1, dontSendNotification);
@@ -90,8 +93,10 @@ void MainComponent::resized() {
     globalBound.removeFromTop(8);
     int totalWidth = globalBound.getWidth();
 
-    this->audioSettings.setBounds(
-            globalBound.removeFromTop(24).removeFromLeft(120));
+    Rectangle<int> firstRow = globalBound.removeFromTop(24);
+
+    this->audioSettings.setBounds(firstRow.removeFromLeft(120));
+    this->clearAllVoice.setBounds(firstRow.removeFromRight(120));
 
     globalBound.removeFromTop(8);
     this->midiKeyboardComponent.setBounds(globalBound.removeFromTop(64));
@@ -121,21 +126,21 @@ void MainComponent::buttonClicked(Button *button) {
     if (button == &this->audioSettings) {
         this->openAudioSettings();
     } else if (button == &this->addVoiceButton) {
-        // TODO implement this!
         String voiceType = synthesiserVoiceAdder.getItemText(synthesiserVoiceAdder.getSelectedItemIndex());
         auto* voiceToAdd = new ElementaryVoice(voiceType);
         this->audioSource.addVoice(voiceToAdd);
-
-        synthesiserList.updateContent();
-        synthesiserList.repaint();
+        this->updateSynthesiserList();
+    } else if (button == &this->clearAllVoice) {
+        this->audioSource.removeAllVoices();
+        this->updateSynthesiserList();
     }
 }
 
-void MainComponent::comboBoxChanged(ComboBox *comboBox) {
-    if (comboBox == &this->synthesiserVoiceAdder) {
-        // NOP
-    }
-}
+//void MainComponent::comboBoxChanged(ComboBox *comboBox) {
+//    if (comboBox == &this->synthesiserVoiceAdder) {
+//        // NOP
+//    }
+//}
 
 //// ==============================================================================
 //// Timer callback
@@ -161,7 +166,18 @@ void MainComponent::paintListBoxItem(int rowNumber, Graphics &g, int width, int 
     g.setColour(Colours::white);
     g.setFont(15.0);
     Rectangle<int> textBound = Rectangle<int>(4, 0, width, height);
-    g.drawText(audioSource.getVoice(rowNumber)->toString(), textBound, Justification::centredLeft);
+    // Row number is 0 based.
+    String stringToPaint = String(rowNumber + 1) + ". " + audioSource.getVoice(rowNumber)->toString();
+    g.drawText(stringToPaint, textBound, Justification::centredLeft);
+}
+
+void MainComponent::listBoxItemDoubleClicked(int row, const MouseEvent &) {
+    // TODO display new window
+}
+
+void MainComponent::deleteKeyPressed(int lastRowSelected) {
+    audioSource.removeVoice(lastRowSelected);
+    updateSynthesiserList();
 }
 
 //// ==============================================================================
@@ -178,4 +194,9 @@ void MainComponent::openAudioSettings() {
     dialogWindow.dialogBackgroundColour = this->getLookAndFeel().findColour(ResizableWindow::backgroundColourId);
     dialogWindow.content.setOwned(audioSettingsPanel.release());
     dialogWindow.launchAsync();
+}
+
+void MainComponent::updateSynthesiserList() {
+    synthesiserList.updateContent();
+    synthesiserList.repaint();
 }

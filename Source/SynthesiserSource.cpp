@@ -82,7 +82,7 @@ int ElementaryVoiceSynthesiser::getTotalNumVoices() {
 //// ==============================================================================
 
 ElementaryVoice::ElementaryVoice(const String& voiceType) {
-    jassert(this->voiceTypes.contains(voiceType));
+    assert(this->voiceTypes.contains(voiceType));
     this->voiceType = voiceType;
 
     amplitudeFactorSlider.addListener(this);
