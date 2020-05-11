@@ -87,6 +87,7 @@ public:
 //// ==============================================================================
 //// Component callback functions.
 //// ==============================================================================
+
     /**
      * Called when a button is clicked
      * @param button the button which is clicked
@@ -108,6 +109,7 @@ public:
 //// ==============================================================================
 //// Value tree listener
 //// ==============================================================================
+
     /**
      * Called when the value tree we listen to has a property change
      * @param treeWhosePropertyHasChanged the value tree that has the property changed
@@ -118,6 +120,7 @@ public:
 //// ==============================================================================
 //// Timer callback
 //// ==============================================================================
+
     /**
      * Called periodically to carry out certain task
      */
@@ -129,11 +132,6 @@ private:
 
     MidiKeyboardComponent midiKeyboardComponent;
     MidiKeyboardState midiKeyboardState;
-
-    Label tailOnLabel {"tailOn", "Tail on:"};
-    Slider tailOnSlider {"tailOnSlider"};
-    Label tailOffLabel {"tailOff", "Tail off:"};
-    Slider tailOffSlider {"tailOffSlider"};
 
     SynthesiserList synthesiserList;
     ComboBox synthesiserVoiceAdder;

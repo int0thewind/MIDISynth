@@ -14,8 +14,7 @@
 /**
  * A data class that determines whether a sound or a channel can be played by the synthesiser
  */
-class SynthesiserAudioSound : public SynthesiserSound
-{
+class SynthesiserAudioSound : public SynthesiserSound {
     /**
      * Return whether a note can be played or not.
      * This method accepts all the available note number.
@@ -33,79 +32,71 @@ class SynthesiserAudioSound : public SynthesiserSound
     bool appliesToChannel (int midiChannel) override;
 };
 
-class SineWaveVoice : public SynthesiserVoice {
+class ElementaryVoice : public SynthesiserVoice, public Component, public Slider::Listener {
 public:
+//// ==============================================================================
+//// Constructors and destructors
+//// ==============================================================================
+
+    explicit ElementaryVoice(const String& voiceType);
+    ~ElementaryVoice() override = default;
+
+//// ==============================================================================
+//// Voice rendering methods
+//// ==============================================================================
+
     bool canPlaySound(SynthesiserSound *sound) override;
-
     void startNote(int midiNoteNumber, float velocity, SynthesiserSound *sound, int currentPitchWheelPosition) override;
-
     void stopNote(float velocity, bool allowTailOff) override;
-
     void pitchWheelMoved(int newPitchWheelValue) override;
-
     void controllerMoved(int controllerNumber, int newControllerValue) override;
-
     void renderNextBlock(AudioBuffer<float> &outputBuffer, int startSample, int numSamples) override;
-};
 
-class SquareWaveVoice : public SynthesiserVoice {
-public:
-    bool canPlaySound(SynthesiserSound *sound) override;
+//// ==============================================================================
+//// Component callback functions
+//// ==============================================================================
 
-    void startNote(int midiNoteNumber, float velocity, SynthesiserSound *sound, int currentPitchWheelPosition) override;
+    void sliderValueChanged(Slider *slider) override;
 
-    void stopNote(float velocity, bool allowTailOff) override;
+//// ==============================================================================
+//// Graphical interface rendering
+//// ==============================================================================
 
-    void pitchWheelMoved(int newPitchWheelValue) override;
+    void paint(Graphics& g) override;
+    void resized() override;
 
-    void controllerMoved(int controllerNumber, int newControllerValue) override;
+//// ==============================================================================
+//// Constructors and destructors
+//// ==============================================================================
 
-    void renderNextBlock(AudioBuffer<float> &outputBuffer, int startSample, int numSamples) override;
-};
+    void showWindowAsync();
 
-class TriangleWaveVoice : public SynthesiserVoice {
-public:
-    bool canPlaySound(SynthesiserSound *sound) override;
+private:
+    StringArray voiceTypes {"Sine", "Square", "Triangle", "Sawtooth"};
+    String voiceType {""};
 
-    void startNote(int midiNoteNumber, float velocity, SynthesiserSound *sound, int currentPitchWheelPosition) override;
+    double currentAngle = 0.0;
+    double angleDelta = 0.0;
 
-    void stopNote(float velocity, bool allowTailOff) override;
+    double amplitudeFactor = 1.0;
+    Slider amplitudeFactorSlider
+        {Slider::SliderStyle::LinearHorizontal, Slider::TextEntryBoxPosition::TextBoxLeft};
+    Label amplitudeFactorLabel {"amplitudeFactorLabel", "Amplitude factor:"};
 
-    void pitchWheelMoved(int newPitchWheelValue) override;
+    double frequencyFactor = 1.0;
+    Slider frequencyFactorSlider
+        {Slider::SliderStyle::LinearHorizontal, Slider::TextEntryBoxPosition::TextBoxLeft};;
+    Label frequencyFactorLabel {"frequencyFactorLabel", "Frequency factor:"};
 
-    void controllerMoved(int controllerNumber, int newControllerValue) override;
+    double tailOn = 1.0;
+    Slider tailOnSlider
+        {Slider::SliderStyle::LinearHorizontal, Slider::TextEntryBoxPosition::TextBoxLeft};;
+    Label tailOnLabel {"tailOnLabel", "Tail on value:"};
 
-    void renderNextBlock(AudioBuffer<float> &outputBuffer, int startSample, int numSamples) override;
-};
-
-class SawtoothWaveVoice : public SynthesiserVoice {
-public:
-    bool canPlaySound(SynthesiserSound *sound) override;
-
-    void startNote(int midiNoteNumber, float velocity, SynthesiserSound *sound, int currentPitchWheelPosition) override;
-
-    void stopNote(float velocity, bool allowTailOff) override;
-
-    void pitchWheelMoved(int newPitchWheelValue) override;
-
-    void controllerMoved(int controllerNumber, int newControllerValue) override;
-
-    void renderNextBlock(AudioBuffer<float> &outputBuffer, int startSample, int numSamples) override;
-};
-
-class SoundFontVoice : public SynthesiserVoice {
-public:
-    bool canPlaySound(SynthesiserSound *sound) override;
-
-    void startNote(int midiNoteNumber, float velocity, SynthesiserSound *sound, int currentPitchWheelPosition) override;
-
-    void stopNote(float velocity, bool allowTailOff) override;
-
-    void pitchWheelMoved(int newPitchWheelValue) override;
-
-    void controllerMoved(int controllerNumber, int newControllerValue) override;
-
-    void renderNextBlock(AudioBuffer<float> &outputBuffer, int startSample, int numSamples) override;
+    double tailOff = 1.0;
+    Slider tailOffSlider
+        {Slider::SliderStyle::LinearHorizontal, Slider::TextEntryBoxPosition::TextBoxLeft};;
+    Label tailOffLabel {"tailOffLabel", "Tail off value:"};
 };
 
 class SynthesiserAudioSource : public AudioSource {
@@ -157,6 +148,7 @@ public:
     void removeAllVoices();
 
 private:
+    const int MAX_VOICES = 8;
     /**
      * Reference of the MIDI Keyboard State
      * The whole application should only accepts one MIDI Keyboard State, which is from the main component

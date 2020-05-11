@@ -53,9 +53,60 @@ void SynthesiserAudioSource::removeVoice(int index) {
 }
 
 void SynthesiserAudioSource::addVoice(SynthesiserVoice *voice) {
+    if (this->synthesiser.getNumVoices() >= MAX_VOICES) { return; }
     this->synthesiser.addVoice(voice);
 }
 
 void SynthesiserAudioSource::removeAllVoices() {
     this->synthesiser.clearVoices();
+}
+
+//// ==============================================================================
+//// ElementaryVoice Class
+//// ==============================================================================
+
+ElementaryVoice::ElementaryVoice(const String& voiceType) {
+    jassert(this->voiceTypes.contains(voiceType));
+    this->voiceType = voiceType;
+}
+
+bool ElementaryVoice::canPlaySound(SynthesiserSound *sound) {
+    return sound != nullptr;
+}
+
+void
+ElementaryVoice::startNote(int midiNoteNumber, float velocity, SynthesiserSound *sound, int currentPitchWheelPosition) {
+
+}
+
+void ElementaryVoice::stopNote(float velocity, bool allowTailOff) {
+
+}
+
+void ElementaryVoice::pitchWheelMoved(int newPitchWheelValue) {
+
+}
+
+void ElementaryVoice::controllerMoved(int controllerNumber, int newControllerValue) {
+
+}
+
+void ElementaryVoice::renderNextBlock(AudioBuffer<float> &outputBuffer, int startSample, int numSamples) {
+
+}
+
+void ElementaryVoice::sliderValueChanged(Slider *slider) {
+
+}
+
+void ElementaryVoice::paint(Graphics &g) {
+    g.fillAll(this->getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
+}
+
+void ElementaryVoice::resized() {
+    Component::resized();
+}
+
+void ElementaryVoice::showWindowAsync() {
+
 }

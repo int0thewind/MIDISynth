@@ -125,7 +125,8 @@ public:
            #if JUCE_IOS || JUCE_ANDROID
             this->setFullScreen (true);
            #else
-            this->setResizable (false, false);
+            this->setResizable (true, true);
+            this->setResizeLimits(560, 400, 1120, 800);
             this->centreWithSize (this->getWidth(), this->getHeight());
            #endif
 

@@ -15,28 +15,12 @@ MainComponent::MainComponent() :
     // Initialise midiKeyboardComponent
     midiKeyboardComponent.setOctaveForMiddleC(4);
     addAndMakeVisible(midiKeyboardComponent);
-    // Initialise tailOn Label
-    addAndMakeVisible(tailOnLabel);
-    // Initialise tailOnSlider
-    tailOnSlider.addListener(this);
-    tailOnSlider.setSliderStyle(Slider::SliderStyle::LinearBar);
-    tailOnSlider.setRange(0.05, 0.95);
-    tailOnSlider.setValue(0.95);
-    addAndMakeVisible(tailOnSlider);
-    // Initialise tailOff Label
-    addAndMakeVisible(tailOffLabel);
-    // Initialise tailOffSlider
-    tailOffSlider.addListener(this);
-    tailOffSlider.setSliderStyle(Slider::SliderStyle::LinearBar);
-    tailOffSlider.setRange(0.05, 0.95);
-    tailOffSlider.setValue(0.05);
-    addAndMakeVisible(tailOffSlider);
     // Initialise synthesiserList
     addAndMakeVisible(synthesiserList);
     // Initialise synthesiserVoiceAdder
     synthesiserVoiceAdder.addListener(this);
     synthesiserVoiceAdder.addItemList(
-            {"Sine", "Square", "Sawtooth", "Triangle", "Custom Sound Font"}, 1);
+            {"Sine", "Square", "Triangle", "Sawtooth"}, 1);
     synthesiserVoiceAdder.setText("Select the voice to add", dontSendNotification);
     addAndMakeVisible(synthesiserVoiceAdder);
     // Initialise audioVisualiserComponent
@@ -44,6 +28,7 @@ MainComponent::MainComponent() :
     // Initialise CPU Usage Label
     addAndMakeVisible(cpuUsageLabel);
     // Initialise CPU Usage
+    cpuUsage.setJustificationType(Justification::centredLeft);
     addAndMakeVisible(cpuUsage);
     // Make sure we set the size of the component at last!
     this->setSize (852,608);
@@ -60,7 +45,8 @@ MainComponent::MainComponent() :
     }
     // Timer setup
     this->startTimer(500);
-    // TODO value tree listener initialisation
+    // value tree listener
+    this->synthesiserData.addListener(this);
 }
 
 MainComponent::~MainComponent() {
@@ -73,16 +59,16 @@ MainComponent::~MainComponent() {
 //// ==============================================================================
 
 void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate) {
-
+    this->audioSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
 void MainComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFill) {
-
     bufferToFill.clearActiveBufferRegion();
+    this->audioSource.getNextAudioBlock(bufferToFill);
 }
 
 void MainComponent::releaseResources() {
-
+    this->audioSource.releaseResources();
 }
 
 //// ==============================================================================
@@ -99,33 +85,27 @@ void MainComponent::resized() {
     globalBound.removeFromBottom(8);
     globalBound.removeFromLeft(8);
     globalBound.removeFromTop(8);
-
-    Rectangle<int> leftColumn = globalBound.removeFromLeft(608);
-    Rectangle<int> rightColumn = globalBound.removeFromRight(236);
+    int totalWidth = globalBound.getWidth();
 
     this->audioSettings.setBounds(
-            leftColumn.removeFromTop(24).removeFromLeft(120));
-    leftColumn.removeFromTop(8);
-    this->midiKeyboardComponent.setBounds(leftColumn.removeFromTop(64));
-    leftColumn.removeFromTop(8);
-    this->audioVisualiserComponent.setBounds(leftColumn.removeFromTop(456));
-    leftColumn.removeFromTop(8);
-    this->cpuUsageLabel.setBounds(leftColumn.removeFromLeft(96));
-    this->cpuUsage.setBounds(leftColumn.removeFromLeft(72));
+            globalBound.removeFromTop(24).removeFromLeft(120));
 
-    rightColumn.removeFromTop(36);
-    Rectangle<int> onSlider = rightColumn.removeFromTop(24);
-    this->tailOnLabel.setBounds(onSlider.removeFromLeft(60));
-    this->tailOnSlider.setBounds(onSlider);
-    rightColumn.removeFromTop(8);
-    Rectangle<int> offSlider = rightColumn.removeFromTop(24);
-    this->tailOffLabel.setBounds(offSlider.removeFromLeft(60));
-    this->tailOffSlider.setBounds(offSlider);
-    rightColumn.removeFromTop(12);
+    globalBound.removeFromTop(8);
+    this->midiKeyboardComponent.setBounds(globalBound.removeFromTop(64));
+    globalBound.removeFromTop(8);
+    Rectangle<int> lastColumn = globalBound.removeFromBottom(24);
+    globalBound.removeFromBottom(8);
 
-    this->synthesiserList.setBounds(rightColumn.removeFromTop(456));
-    rightColumn.removeFromTop(8);
-    this->synthesiserVoiceAdder.setBounds(rightColumn);
+    this->cpuUsageLabel.setBounds(lastColumn.removeFromLeft(100));
+    this->cpuUsage.setBounds(lastColumn.removeFromLeft(100));
+    this->synthesiserVoiceAdder.setBounds(
+            lastColumn.removeFromRight((int) totalWidth * (MathConstants<float>::sqrt2 - 1.)));
+
+    Rectangle<int> middleColumn = globalBound;
+    this->synthesiserList.setBounds(
+            middleColumn.removeFromRight((int) totalWidth * (MathConstants<float>::sqrt2 - 1.)));
+    middleColumn.removeFromRight(8);
+    this->audioVisualiserComponent.setBounds(middleColumn);
 }
 
 //// ==============================================================================
@@ -133,7 +113,9 @@ void MainComponent::resized() {
 //// ==============================================================================
 
 void MainComponent::buttonClicked(Button *button) {
-
+    if (button == &this->audioSettings) {
+        this->openAudioSettings();
+    }
 }
 
 void MainComponent::sliderValueChanged(Slider *slider) {
@@ -157,7 +139,9 @@ void MainComponent::valueTreePropertyChanged(ValueTree &treeWhosePropertyHasChan
 //// ==============================================================================
 
 void MainComponent::timerCallback() {
-
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(2) << this->deviceManager.getCpuUsage() << " %";
+    this->cpuUsage.setText(ss.str(), dontSendNotification);
 }
 
 //// ==============================================================================
