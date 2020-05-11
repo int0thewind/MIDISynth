@@ -40,6 +40,9 @@ void ElementaryVoiceSynthesiser::releaseResources() {
 }
 
 void ElementaryVoiceSynthesiser::getNextAudioBlock(const AudioSourceChannelInfo &bufferToFill) {
+    if (synthesiser.getNumVoices() == 0) {
+        return;
+    }
     bufferToFill.clearActiveBufferRegion();
     MidiBuffer incomingMidi;
     this->midiKeyboardState.processNextMidiBuffer (incomingMidi, bufferToFill.startSample,
@@ -100,16 +103,16 @@ ElementaryVoice::ElementaryVoice(const String& voiceType) {
     addAndMakeVisible(frequencyFactorLabel);
 
     tailOnSlider.addListener(this);
-    tailOnSlider.setRange(0.0, 1.0);
+    tailOnSlider.setRange(0.001, 1.0);
     tailOnSlider.setValue(1.0);
     tailOnSlider.setSkewFactorFromMidPoint(0.8);
     addAndMakeVisible(tailOnSlider);
     addAndMakeVisible(tailOnLabel);
 
     tailOffSlider.addListener(this);
-    tailOffSlider.setRange(0.0, 1.0);
+    tailOffSlider.setRange(0.0, 0.99);
     tailOffSlider.setValue(0.0);
-    tailOffSlider.setSkewFactorFromMidPoint(0.2);
+    tailOffSlider.setSkewFactorFromMidPoint(0.9);
     addAndMakeVisible(tailOffSlider);
     addAndMakeVisible(tailOffLabel);
 
