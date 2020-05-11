@@ -24,7 +24,7 @@ class MainComponent :
         public AudioAppComponent,
         public Button::Listener,
         public juce::Timer,
-        public ListBoxModel
+        public juce::ListBoxModel
 {
 public:
 //// ==============================================================================
@@ -134,7 +134,6 @@ public:
 private:
     TextButton audioSettings {"Audio settings"};
     TextButton clearAllVoice {"Clear all voice"};
-    // TODO should have an selector to choose input devices?
 
     MidiKeyboardComponent midiKeyboardComponent;
     MidiKeyboardState midiKeyboardState;

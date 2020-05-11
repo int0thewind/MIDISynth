@@ -66,11 +66,14 @@ MainComponent::~MainComponent() {
 
 void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate) {
     this->audioSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
+    this->audioVisualiserComponent.setSamplesPerBlock(8);
+    this->audioVisualiserComponent.setBufferSize(samplesPerBlockExpected);
 }
 
 void MainComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFill) {
     bufferToFill.clearActiveBufferRegion();
     this->audioSource.getNextAudioBlock(bufferToFill);
+    audioVisualiserComponent.pushBuffer(bufferToFill);
 }
 
 void MainComponent::releaseResources() {
@@ -82,7 +85,7 @@ void MainComponent::releaseResources() {
 //// ==============================================================================
 
 void MainComponent::paint (Graphics& g) {
-    g.fillAll(this->getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
+    g.fillAll(this->getLookAndFeel().findColour(ResizableWindow::backgroundColourId));
 }
 
 void MainComponent::resized() {
@@ -107,13 +110,14 @@ void MainComponent::resized() {
     this->cpuUsageLabel.setBounds(lastColumn.removeFromLeft(100));
     this->cpuUsage.setBounds(lastColumn.removeFromLeft(100));
     this->addVoiceButton.setBounds(lastColumn.removeFromRight(120));
+    lastColumn.removeFromRight(8);
     this->synthesiserVoiceAdder.setBounds(
             lastColumn.removeFromRight(
-                    (int) totalWidth * (MathConstants<float>::sqrt2 - 1.) - 128));
+                    (int) totalWidth * (MathConstants<float>::sqrt2 - 1.) - 120));
 
     Rectangle<int> middleColumn = globalBound;
-    this->synthesiserList.setBounds(
-            middleColumn.removeFromRight((int) totalWidth * (MathConstants<float>::sqrt2 - 1.)));
+    this->synthesiserList.setBounds(middleColumn.removeFromRight(
+            (int) totalWidth * (MathConstants<float>::sqrt2 - 1.)));
     middleColumn.removeFromRight(8);
     this->audioVisualiserComponent.setBounds(middleColumn);
 }
@@ -156,7 +160,9 @@ int MainComponent::getNumRows() {
 }
 
 void MainComponent::paintListBoxItem(int rowNumber, Graphics &g, int width, int height, bool rowIsSelected) {
-    if (rowNumber > this->getNumRows()) { return; }
+    if (rowNumber > this->getNumRows()) {
+        return;
+    }
     g.setColour(Colours::white);
     g.setFont(15.0);
     Rectangle<int> textBound = Rectangle<int>(4, 0, width, height);
@@ -171,7 +177,7 @@ void MainComponent::listBoxItemDoubleClicked(int row, const MouseEvent &) {
     dialogWindow.useNativeTitleBar = true;
     dialogWindow.resizable = false;
     dialogWindow.dialogTitle = "Voice Configuration";
-    dialogWindow.dialogBackgroundColour = this->getLookAndFeel().findColour(ResizableWindow::backgroundColourId);
+    dialogWindow.dialogBackgroundColour = Colours::black;
     dialogWindow.content.setNonOwned(voice);
     dialogWindow.launchAsync();
 
@@ -194,7 +200,7 @@ void MainComponent::openAudioSettings() {
     dialogWindow.useNativeTitleBar = true;
     dialogWindow.resizable = false;
     dialogWindow.dialogTitle = "Audio Settings";
-    dialogWindow.dialogBackgroundColour = this->getLookAndFeel().findColour(ResizableWindow::backgroundColourId);
+    dialogWindow.dialogBackgroundColour = Colours::black;
     dialogWindow.content.setOwned(audioSettingsPanel.release());
     dialogWindow.launchAsync();
 }
