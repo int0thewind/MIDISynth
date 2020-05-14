@@ -113,9 +113,8 @@ void MainComponent::resized() {
     this->cpuUsage.setBounds(lastColumn.removeFromLeft(100));
     this->addVoiceButton.setBounds(lastColumn.removeFromRight(120));
     lastColumn.removeFromRight(8);
-    this->synthesiserVoiceAdder.setBounds(
-            lastColumn.removeFromRight(
-                    (int) totalWidth * (MathConstants<float>::sqrt2 - 1.) - 120));
+    this->synthesiserVoiceAdder.setBounds(lastColumn.removeFromRight(
+            (int) totalWidth * (MathConstants<float>::sqrt2 - 1.) - 120 - 8));
 
     Rectangle<int> middleColumn = globalBound;
     this->synthesiserList.setBounds(middleColumn.removeFromRight(
