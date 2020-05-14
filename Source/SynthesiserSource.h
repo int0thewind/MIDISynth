@@ -11,10 +11,18 @@
 #pragma once
 
 #include "JuceHeader.h"
+#include <cmath>
 
-class Angle {
+class PeriodicAngle {
 public:
-    explicit Angle(float angleDelta = 0.0f) : currentAngle(0.0f) ,  angleDelta(angleDelta) {};
+    explicit PeriodicAngle(float angleLimit = MathConstants<float>::twoPi,
+                           float angleDelta = 0.0f) :
+                           angleLimit(angleLimit), currentAngle(0.0f) , angleDelta(angleDelta) {};
+
+    PeriodicAngle(PeriodicAngle& newAngle) {
+        currentAngle = newAngle.getCurrentAngle();
+        angleDelta = newAngle.getAngleDelta();
+    }
 
     float getAngleDelta() const {
         return angleDelta;
@@ -26,36 +34,70 @@ public:
 
     void setCurrentAngle(float newCurrentAngle) {
         currentAngle = newCurrentAngle;
+        reduceCurrentAngle();
     }
 
     void setAngleDelta(float newAngleDelta) {
+        if (!checkAngleDelta(newAngleDelta)) {
+            std::cerr << "Invalid angleDelta. It should be bigger than the angleLimit. " << std::endl;
+            return;
+        }
         angleDelta = newAngleDelta;
+    }
+
+    float getAngleLimit() const {
+        return angleLimit;
+    }
+
+    void setAngleLimit(float newAngleLimit) {
+        if (!checkAngleLimit(newAngleLimit)) {
+            std::cerr << "Invalid angleLimit. It should be bigger than the angleLimit. " << std::endl;
+            return;
+        }
+        angleLimit = newAngleLimit;
+        reduceCurrentAngle();
+    }
+
+    void resetAll() {
+        currentAngle = 0;
+        angleDelta = 0;
     }
 
     explicit operator float() const {
         return currentAngle;
     }
 
-    Angle& operator++() {
+    PeriodicAngle& operator++() {
         this->currentAngle += angleDelta;
-        if (angleDelta >= MathConstants<float>::twoPi) {
-            angleDelta -= MathConstants<float>::twoPi;
-        }
+        reduceCurrentAngle();
         return *this;
     }
 
-    Angle operator++(int) {
-        Angle toReturn = *this;
-        this->currentAngle += angleDelta;
-        if (angleDelta >= MathConstants<float>::twoPi) {
-            angleDelta -= MathConstants<float>::twoPi;
-        }
+    PeriodicAngle operator++(int i) {
+        PeriodicAngle toReturn = *this;
+        this->currentAngle += angleDelta * (float) i;
+        reduceCurrentAngle();
         return toReturn;
     }
 
 private:
+    float angleLimit = MathConstants<float>::twoPi;
     float currentAngle = 0.0f;
     float angleDelta = 0.0f;
+
+    inline void reduceCurrentAngle() {
+        while (angleDelta >= angleLimit) {
+            angleDelta -= angleLimit;
+        }
+    }
+
+    inline bool checkAngleDelta(float newAngleDelta) const {
+        return newAngleDelta < angleLimit;
+    }
+
+    inline bool checkAngleLimit(float newAngleLimit) const {
+        return angleDelta < newAngleLimit;
+    }
 };
 
 /**
@@ -124,7 +166,7 @@ private:
 
     const float NYQUIST_FREQUENCY = 44100.0f;
 
-    mutable Angle angle;
+    mutable PeriodicAngle angle;
     float dynamics = 0.0f;
     float tailOn = 0.0f;
     float tailOff = 0.0f;
