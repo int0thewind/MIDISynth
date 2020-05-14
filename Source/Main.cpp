@@ -65,25 +65,6 @@ public:
     }
 
     //==============================================================================
-
-    /**
-     * Helper function to close all the displaying windows.
-     * It creates a unique pointer to each instance of the opening windows and push it to a container,
-     * so that each instance of window can be closed by itself.
-     */
-    static void closeAllWindows() {
-        std::vector<std::unique_ptr<AlertWindow>> alertWindows;
-        std::vector<std::unique_ptr<DialogWindow>> dialogWindows;
-        Desktop& desktop = Desktop::getInstance();
-        for (int i = 0; i < desktop.getNumComponents(); i++) {
-            if (auto alertWindow = dynamic_cast<AlertWindow*> (desktop.getComponent(i))) {
-                alertWindows.push_back(std::unique_ptr<AlertWindow>(alertWindow));
-            } else if (auto dialogWindow = dynamic_cast<DialogWindow*>(desktop.getComponent(i))) {
-                dialogWindows.push_back(std::unique_ptr<DialogWindow>(dialogWindow));
-            }
-        }
-    }
-
     /**
      * This is called when the app is being asked to quit
      */
@@ -154,6 +135,24 @@ public:
 private:
     /** The main window pointer being hold by the main application. */
     std::unique_ptr<MainWindow> mainWindow;
+
+    /**
+     * Helper function to close all the displaying windows.
+     * It creates a unique pointer to each instance of the opening windows and push it to a container,
+     * so that each instance of window can be closed by itself.
+     */
+    static inline void closeAllWindows() {
+        std::vector<std::unique_ptr<AlertWindow>> alertWindows;
+        std::vector<std::unique_ptr<DialogWindow>> dialogWindows;
+        Desktop& desktop = Desktop::getInstance();
+        for (int i = 0; i < desktop.getNumComponents(); i++) {
+            if (auto alertWindow = dynamic_cast<AlertWindow*> (desktop.getComponent(i))) {
+                alertWindows.push_back(std::unique_ptr<AlertWindow>(alertWindow));
+            } else if (auto dialogWindow = dynamic_cast<DialogWindow*>(desktop.getComponent(i))) {
+                dialogWindows.push_back(std::unique_ptr<DialogWindow>(dialogWindow));
+            }
+        }
+    }
 };
 
 //==============================================================================
