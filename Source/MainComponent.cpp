@@ -185,9 +185,7 @@ void MainComponent::listBoxItemDoubleClicked(int row, const MouseEvent &) {
     dialogWindowOptions.dialogTitle = "Voice Configuration for Voice " + String(row);
     dialogWindowOptions.dialogBackgroundColour = Colours::black;
     dialogWindowOptions.content.setNonOwned(voice);
-    DialogWindow* dialogWindow = dialogWindowOptions.create();
-    dialogWindow->addToDesktop();
-    dialogWindow->setVisible(true);
+    dialogWindowOptions.launchAsync();
 }
 
 void MainComponent::deleteKeyPressed(int lastRowSelected) {
