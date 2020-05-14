@@ -20,9 +20,10 @@ MainComponent::MainComponent() :
     midiKeyboardComponent.setOctaveForMiddleC(4);
     addAndMakeVisible(midiKeyboardComponent);
     // Initialise synthesiserList
+    synthesiserList.setMultipleSelectionEnabled(false);
+    synthesiserList.setClickingTogglesRowSelection(true);
     addAndMakeVisible(synthesiserList);
     // Initialise synthesiserVoiceAdder
-//    synthesiserVoiceAdder.addListener(this);
     synthesiserVoiceAdder.addItemList(
             {"Sine", "Square", "Triangle", "Sawtooth"}, 1);
     synthesiserVoiceAdder.setSelectedId(1, dontSendNotification);
@@ -40,16 +41,16 @@ MainComponent::MainComponent() :
     // Make sure we set the size of the component at last!
     this->setSize (852,608);
     // Some platforms require permissions to open input channels so request that here
-    if (RuntimePermissions::isRequired (RuntimePermissions::recordAudio) &&
-        !RuntimePermissions::isGranted (RuntimePermissions::recordAudio)) {
-        RuntimePermissions::request (RuntimePermissions::recordAudio,
-                [&] (bool granted) { if (granted) {
-                    this->setAudioChannels(2, 2);
-                }
-        });
-    } else {
-        this->setAudioChannels(2, 2);
-    }
+//    if (RuntimePermissions::isRequired (RuntimePermissions::recordAudio) &&
+//        !RuntimePermissions::isGranted (RuntimePermissions::recordAudio)) {
+//        RuntimePermissions::request (RuntimePermissions::recordAudio,
+//                [&] (bool granted) { if (granted) {
+//                    this->setAudioChannels(2, 2);
+//                }
+//        });
+//    } else {
+        this->setAudioChannels(0, 2);
+//    }
     // Timer setup
     this->startTimer(500);
 }
@@ -61,7 +62,7 @@ MainComponent::~MainComponent() {
 }
 
 //// ==============================================================================
-//// Audio related function
+//// AudioSource inheritance
 //// ==============================================================================
 
 void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate) {
@@ -74,6 +75,7 @@ void MainComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFil
     bufferToFill.clearActiveBufferRegion();
     this->audioSource.getNextAudioBlock(bufferToFill);
     audioVisualiserComponent.pushBuffer(bufferToFill);
+//    DBG(audioSource.getStatus());
 }
 
 void MainComponent::releaseResources() {
@@ -149,6 +151,9 @@ void MainComponent::timerCallback() {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(2) << this->deviceManager.getCpuUsage() << " %";
     this->cpuUsage.setText(ss.str(), dontSendNotification);
+    if (audioSource.shouldUpdateStatus()) {
+        updateSynthesiserList();
+    }
 }
 
 //// ==============================================================================
@@ -160,12 +165,14 @@ int MainComponent::getNumRows() {
 }
 
 void MainComponent::paintListBoxItem(int rowNumber, Graphics &g, int width, int height, bool rowIsSelected) {
-    if (rowNumber > this->getNumRows()) {
-        return;
-    }
-    g.setColour(Colours::white);
-    g.setFont(15.0);
     Rectangle<int> textBound = Rectangle<int>(4, 0, width, height);
+    g.setColour(synthesiserList.getLookAndFeel().findColour(ListBox::ColourIds::outlineColourId));
+    g.drawRect(textBound);
+    if (rowIsSelected) {
+        g.fillAll(Colours::black);
+    }
+    g.setColour(synthesiserList.getLookAndFeel().findColour(ListBox::ColourIds::textColourId));
+    g.setFont(15.0);
     // Row number is 0 based.
     String stringToPaint = String(rowNumber + 1) + ". " + audioSource.getVoice(rowNumber)->toString();
     g.drawText(stringToPaint, textBound, Justification::centredLeft);
@@ -173,15 +180,15 @@ void MainComponent::paintListBoxItem(int rowNumber, Graphics &g, int width, int 
 
 void MainComponent::listBoxItemDoubleClicked(int row, const MouseEvent &) {
     ElementaryVoice* voice = audioSource.getVoice(row);
-    juce::DialogWindow::LaunchOptions dialogWindow;
-    dialogWindow.useNativeTitleBar = true;
-    dialogWindow.resizable = false;
-    dialogWindow.dialogTitle = "Voice Configuration";
-    dialogWindow.dialogBackgroundColour = Colours::black;
-    dialogWindow.content.setNonOwned(voice);
-    dialogWindow.launchAsync();
-
-    updateSynthesiserList();
+    juce::DialogWindow::LaunchOptions dialogWindowOptions;
+    dialogWindowOptions.useNativeTitleBar = true;
+    dialogWindowOptions.resizable = false;
+    dialogWindowOptions.dialogTitle = "Voice Configuration for Voice " + String(row);
+    dialogWindowOptions.dialogBackgroundColour = Colours::black;
+    dialogWindowOptions.content.setNonOwned(voice);
+    DialogWindow* dialogWindow = dialogWindowOptions.create();
+    dialogWindow->addToDesktop();
+    dialogWindow->setVisible(true);
 }
 
 void MainComponent::deleteKeyPressed(int lastRowSelected) {
@@ -194,13 +201,17 @@ void MainComponent::deleteKeyPressed(int lastRowSelected) {
 //// ==============================================================================
 
 void MainComponent::openAudioSettings() {
-    auto audioSettingsPanel = std::make_unique<juce::AudioDeviceSelectorComponent>(this->deviceManager, 0, 2, 0, 2, true, true, true, true);
+    auto audioSettingsPanel = std::make_unique<juce::AudioDeviceSelectorComponent>(
+            this->deviceManager, 0, 2,
+            0, 2,
+            true, true,
+            true, true);
     audioSettingsPanel->setSize(500, 270);
     juce::DialogWindow::LaunchOptions dialogWindow;
     dialogWindow.useNativeTitleBar = true;
     dialogWindow.resizable = false;
     dialogWindow.dialogTitle = "Audio Settings";
-    dialogWindow.dialogBackgroundColour = Colours::black;
+    dialogWindow.dialogBackgroundColour = getLookAndFeel().findColour(ResizableWindow::backgroundColourId);
     dialogWindow.content.setOwned(audioSettingsPanel.release());
     dialogWindow.launchAsync();
 }

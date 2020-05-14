@@ -86,8 +86,8 @@ private:
     float angleDelta = 0.0f;
 
     inline void reduceCurrentAngle() {
-        while (angleDelta >= angleLimit) {
-            angleDelta -= angleLimit;
+        while (currentAngle >= angleLimit) {
+            currentAngle -= angleLimit;
         }
     }
 
@@ -103,7 +103,7 @@ private:
 /**
  * A data class that determines whether a sound or a channel can be played by the synthesiser
  */
-class SynthesiserAudioSound : public SynthesiserSound {
+class ElementarySound : public SynthesiserSound {
     /**
      * Return whether a note can be played or not.
      * This method accepts all the available note number.
@@ -121,13 +121,14 @@ class SynthesiserAudioSound : public SynthesiserSound {
     bool appliesToChannel (int midiChannel) override;
 };
 
-class ElementaryVoice : public SynthesiserVoice, public Component, public Slider::Listener {
+class ElementaryVoice :
+public SynthesiserVoice, public Component, public Slider::Listener, public ComboBox::Listener {
 public:
 //// ==============================================================================
 //// Constructors and destructors
 //// ==============================================================================
 
-    explicit ElementaryVoice(const String& voiceType);
+    explicit ElementaryVoice(const String& newVoiceType);
     ~ElementaryVoice() override = default;
 
 //// ==============================================================================
@@ -146,6 +147,7 @@ public:
 //// ==============================================================================
 
     void sliderValueChanged(Slider *slider) override;
+    void comboBoxChanged(ComboBox *comboBoxThatHasChanged) override;
 
 //// ==============================================================================
 //// Graphical interface rendering
@@ -159,10 +161,14 @@ public:
 //// ==============================================================================
 
     String toString();
+    bool shouldUpdateStatus();
 
 private:
+    bool shouldUpdate = false;
+
     const StringArray voiceTypes {"Sine", "Square", "Triangle", "Sawtooth"};
     String voiceType {"Sine"};
+    ComboBox voiceSelection {"voiceSelection"};
 
     const float NYQUIST_FREQUENCY = 44100.0f;
 
@@ -194,14 +200,14 @@ private:
     inline float getCurrentSample(float amplitude);
 };
 
-class ElementaryVoiceSynthesiser : public AudioSource {
+class VoiceSynthesiser : public AudioSource {
 public:
     /**
      * This constructor receives the alias of a midi keyboard state from the main component
      * Also, it sets the synthesiser's voice to our synthesiserAudioSound, which accepts all channels and notes
      * @param state the alias of the midiKeyboardState from the main component.
      */
-    explicit ElementaryVoiceSynthesiser(MidiKeyboardState& state);
+    explicit VoiceSynthesiser(MidiKeyboardState& state);
 
     /**
      * Called when the audio source is changing from unprepared state to prepared state
@@ -251,16 +257,19 @@ public:
     ElementaryVoice* getVoice(int index);
 
     /**
-     * Get all the voices in the synthesiser
-     * @return an array of voices
-     */
-    Array<ElementaryVoice*> getAllVoices();
-
-    /**
      * Get the total number of voices our synthesiser have
      * @return the total number of voices
      */
     int getTotalNumVoices();
+
+    /**
+     * Helper function to help updating the Synthesiser List in the MainComponent
+     * It's being periodically called by the MainComponent's timer.
+     * If one of the voice's status is updated, it will return true.
+     * @see MainComponent::timerCallback(), ElementaryVoice::shouldUpdateStatus()
+     * @return true if one of our voice's info is being modified
+     */
+    bool shouldUpdateStatus();
 
 private:
     const int MAX_VOICES = 8;

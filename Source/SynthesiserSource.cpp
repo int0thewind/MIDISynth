@@ -11,35 +11,35 @@
 #include "SynthesiserSource.h"
 
 //// ==============================================================================
-//// SynthesiserAudioSound Class
+//// ElementarySound Class
 //// ==============================================================================
 
-bool SynthesiserAudioSound::appliesToNote(int midiNoteNumber) {
+bool ElementarySound::appliesToNote(int midiNoteNumber) {
     return true;
 }
 
-bool SynthesiserAudioSound::appliesToChannel(int midiChannel) {
+bool ElementarySound::appliesToChannel(int midiChannel) {
     return true;
 }
 
 //// ==============================================================================
-//// ElementaryVoiceSynthesiser Class
+//// VoiceSynthesiser Class
 //// ==============================================================================
 
-ElementaryVoiceSynthesiser::ElementaryVoiceSynthesiser(MidiKeyboardState &state)
+VoiceSynthesiser::VoiceSynthesiser(MidiKeyboardState &state)
     : midiKeyboardState(state) {
-    this->synthesiser.addSound(new SynthesiserAudioSound());
+    this->synthesiser.addSound(new ElementarySound());
 }
 
-void ElementaryVoiceSynthesiser::prepareToPlay(int samplesPerBlockExpected, double sampleRate) {
+void VoiceSynthesiser::prepareToPlay(int samplesPerBlockExpected, double sampleRate) {
     this->synthesiser.setCurrentPlaybackSampleRate(sampleRate);
 }
 
-void ElementaryVoiceSynthesiser::releaseResources() {
+void VoiceSynthesiser::releaseResources() {
     // Do nothing!
 }
 
-void ElementaryVoiceSynthesiser::getNextAudioBlock(const AudioSourceChannelInfo &bufferToFill) {
+void VoiceSynthesiser::getNextAudioBlock(const AudioSourceChannelInfo &bufferToFill) {
     if (synthesiser.getNumVoices() == 0) {
         return;
     }
@@ -48,45 +48,51 @@ void ElementaryVoiceSynthesiser::getNextAudioBlock(const AudioSourceChannelInfo 
     this->midiKeyboardState.processNextMidiBuffer (incomingMidi, bufferToFill.startSample,
                                                bufferToFill.numSamples, true);
     this->synthesiser.renderNextBlock (*bufferToFill.buffer, incomingMidi,
-                                 bufferToFill.startSample, bufferToFill.numSamples);
+                                       bufferToFill.startSample, bufferToFill.numSamples);
 }
 
-void ElementaryVoiceSynthesiser::removeVoice(int index) {
+void VoiceSynthesiser::removeVoice(int index) {
     this->synthesiser.removeVoice(index);
 }
 
-void ElementaryVoiceSynthesiser::addVoice(ElementaryVoice *voice) {
+void VoiceSynthesiser::addVoice(ElementaryVoice *voice) {
     if (this->synthesiser.getNumVoices() >= MAX_VOICES) { return; }
     this->synthesiser.addVoice(voice);
 }
 
-void ElementaryVoiceSynthesiser::removeAllVoices() {
+void VoiceSynthesiser::removeAllVoices() {
     this->synthesiser.clearVoices();
 }
 
-ElementaryVoice* ElementaryVoiceSynthesiser::getVoice(int index) {
+ElementaryVoice* VoiceSynthesiser::getVoice(int index) {
     return dynamic_cast<ElementaryVoice*>(synthesiser.getVoice(index));
 }
 
-Array<ElementaryVoice*> ElementaryVoiceSynthesiser::getAllVoices() {
-    Array<ElementaryVoice*> allVoices;
-    for (int i = 0; i < synthesiser.getNumVoices(); i++) {
-        allVoices.add(dynamic_cast<ElementaryVoice*>(synthesiser.getVoice(i)));
-    }
-    return allVoices;
+int VoiceSynthesiser::getTotalNumVoices() {
+    return synthesiser.getNumVoices();
 }
 
-int ElementaryVoiceSynthesiser::getTotalNumVoices() {
-    return synthesiser.getNumVoices();
+bool VoiceSynthesiser::shouldUpdateStatus() {
+    for (int i = 0; i < synthesiser.getNumVoices(); ++i) {
+        if (dynamic_cast<ElementaryVoice *>(synthesiser.getVoice(i))->shouldUpdateStatus()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 //// ==============================================================================
 //// ElementaryVoice Class
 //// ==============================================================================
 
-ElementaryVoice::ElementaryVoice(const String& voiceType) {
-    assert(this->voiceTypes.contains(voiceType));
-    this->voiceType = voiceType;
+ElementaryVoice::ElementaryVoice(const String& newVoiceType) {
+    assert(this->voiceTypes.contains(newVoiceType));
+    this->voiceType = newVoiceType;
+
+    voiceSelection.addListener(this);
+    voiceSelection.addItemList(voiceTypes, 1);
+    voiceSelection.setSelectedItemIndex(voiceTypes.indexOf(this->voiceType));
+    addAndMakeVisible(voiceSelection);
 
     amplitudeFactorSlider.addListener(this);
     amplitudeFactorSlider.setRange(0.0, 10.0);
@@ -103,24 +109,24 @@ ElementaryVoice::ElementaryVoice(const String& voiceType) {
     addAndMakeVisible(frequencyFactorLabel);
 
     tailOnSlider.addListener(this);
-    tailOnSlider.setRange(0.001, 1.0);
+    tailOnSlider.setRange(0.00001, 1.0);
     tailOnSlider.setValue(1.0);
     tailOnSlider.setSkewFactorFromMidPoint(0.8);
     addAndMakeVisible(tailOnSlider);
     addAndMakeVisible(tailOnLabel);
 
     tailOffSlider.addListener(this);
-    tailOffSlider.setRange(0.0, 0.99);
+    tailOffSlider.setRange(0.0, 0.9999);
     tailOffSlider.setValue(0.0);
     tailOffSlider.setSkewFactorFromMidPoint(0.9);
     addAndMakeVisible(tailOffSlider);
     addAndMakeVisible(tailOffLabel);
 
-    this->setSize(480, 136);
+    this->setSize(480, 168);
 }
 
 bool ElementaryVoice::canPlaySound(SynthesiserSound *sound) {
-    return sound != nullptr;
+    return dynamic_cast<ElementarySound*>(sound) != nullptr;
 }
 
 void
@@ -160,6 +166,16 @@ void ElementaryVoice::renderNextBlock(AudioBuffer<float> &outputBuffer, int star
     if (this->angle.getAngleDelta() == 0.0 && !voiceTypes.contains(voiceType)) {
         return;
     }
+//    while (--numSamples >= 0) {
+//        float amplitude = dynamics;
+//        float currentSample = getCurrentSample(amplitude);
+//        for (int i = outputBuffer.getNumChannels(); --i >= 0;) {
+//            outputBuffer.addSample(i, startSample, currentSample);
+//        }
+//        ++angle;
+//        ++startSample;
+//    }
+
     if (this->tailOff > 0.0) {
         while (--numSamples >= 0) {
             float amplitude = dynamics * tailOn * tailOff;
@@ -193,14 +209,23 @@ void ElementaryVoice::renderNextBlock(AudioBuffer<float> &outputBuffer, int star
 }
 
 void ElementaryVoice::sliderValueChanged(Slider *slider) {
+    shouldUpdate = true;
     if (slider == &amplitudeFactorSlider) {
         amplitudeFactor = (float) slider->getValue();
     } else if (slider == &frequencyFactorSlider) {
         frequencyFactor = (float) slider->getValue();
-    } else if (slider == &tailOnSlider) {
+    }
+    else if (slider == &tailOnSlider) {
         tailOnFactor = (float) slider->getValue();
     } else if (slider == &tailOffSlider) {
         tailOffFactor = (float) slider->getValue();
+    }
+}
+
+void ElementaryVoice::comboBoxChanged(ComboBox *comboBoxThatHasChanged) {
+    shouldUpdate = true;
+    if (comboBoxThatHasChanged == &voiceSelection) {
+        voiceType = voiceTypes[comboBoxThatHasChanged->getSelectedItemIndex()];
     }
 }
 
@@ -216,6 +241,8 @@ void ElementaryVoice::resized() {
     globalBound.removeFromLeft(8);
     globalBound.removeFromRight(8);
 
+    Rectangle<int> header = globalBound.removeFromTop(24);
+    globalBound.removeFromTop(8);
     Rectangle<int> firstRow = globalBound.removeFromTop(24);
     globalBound.removeFromTop(8);
     Rectangle<int> secondRow = globalBound.removeFromTop(24);
@@ -223,6 +250,8 @@ void ElementaryVoice::resized() {
     Rectangle<int> thirdRow = globalBound.removeFromTop(24);
     globalBound.removeFromTop(8);
     Rectangle<int> fourthRow = globalBound.removeFromTop(24);
+
+    voiceSelection.setBounds(header.removeFromLeft(120));
 
     amplitudeFactorLabel.setBounds(firstRow.removeFromLeft(120));
     amplitudeFactorSlider.setBounds(firstRow);
@@ -239,18 +268,34 @@ void ElementaryVoice::resized() {
 
 float ElementaryVoice::getCurrentSample(float amplitude) {
     if (voiceType == "Square") {
-        return (float) this->angle < MathConstants<float>::pi ? amplitude : -amplitude;
+        return (float) this->angle < (angle.getAngleLimit() / 2.0f) ? amplitude : -amplitude;
     } else if (voiceType == "Sawtooth") {
-        return -amplitude + (float) angle * (amplitude / MathConstants<float>::pi);
+        return (float) angle * (amplitude / (angle.getAngleLimit() / 2.0f)) - amplitude;
     } else if (voiceType == "Triangle") {
-        return (float) this->angle < MathConstants<float>::pi ?
-            -amplitude + 2 * (float) angle * (amplitude / MathConstants<float>::pi) :
-             amplitude - 2 * ((float) angle - MathConstants<float>::pi) * (amplitude / MathConstants<float>::pi);
+        if ((float) angle <= angle.getAngleLimit() / 2.0f) {
+            return (4.0f * amplitude / angle.getAngleLimit()) * (float) angle - amplitude;
+        } else {
+            return (-4.0f * amplitude / angle.getAngleLimit()) * (float) angle + 3.0f * amplitude;
+        }
     }
     // If no matching voiceType return sine wave
-    return (float) std::sin((float) this->angle) * amplitude;
+    return (float) std::sin((float) angle) * amplitude;
 }
 
 String ElementaryVoice::toString() {
-    return voiceType + " wave";
+    std::stringstream ss;
+    ss << voiceType << " wave. ";
+    ss << "amp: " << std::fixed << std::setprecision(2) <<  amplitudeFactor << ". ";
+    ss << "freq: " << std::fixed << std::setprecision(2) <<  frequencyFactor << ". ";
+    ss << "on: " << std::fixed << std::setprecision(2) <<  tailOnFactor << ". ";
+    ss << "off: " << std::fixed << std::setprecision(2) <<  tailOffFactor << ".";
+    return ss.str();
+}
+
+bool ElementaryVoice::shouldUpdateStatus() {
+    if (shouldUpdate) {
+        shouldUpdate = false;
+        return true;
+    }
+    return false;
 }

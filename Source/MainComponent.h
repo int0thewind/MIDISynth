@@ -38,7 +38,7 @@ public:
     ~MainComponent() override;
 
 //// ==============================================================================
-//// Audio related function
+//// AudioSource inheritance
 //// ==============================================================================
 
     /**
@@ -60,7 +60,7 @@ public:
     /**
      * Called when the audio source is changing from prepared state to unprepared state.
      * This function is essentially NOP, though we still have to call the synthesiser's releaseResource() formally.
-     * @see ElementaryVoiceSynthesiser::releaseResource()
+     * @see VoiceSynthesiser::releaseResource()
      */
     void releaseResources() override;
 
@@ -146,7 +146,7 @@ private:
     Label cpuUsageLabel {"cpuUsageLabel", "CPU usage:"};
     Label cpuUsage {"cpuUsage", "0.00 %"};
 
-    ElementaryVoiceSynthesiser audioSource;
+    VoiceSynthesiser audioSource;
 
     inline void openAudioSettings();
 
